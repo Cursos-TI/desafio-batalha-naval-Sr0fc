@@ -1,67 +1,122 @@
 #include <stdio.h>
-
-// Define o tamanho do tabuleiro
-#define TAMANHO 10
-
-// Define o valor que representa o navio no tabuleiro
-#define NAVIO 3
-
-// Tamanho fixo dos navios
+#define TAMANHO_TABULEIRO 10
+#define TAMANHO_HABILIDADE 5
 #define TAMANHO_NAVIO 3
 
-int main() {
-    // Declaração do tabuleiro e inicialização com 0 (água)
-    int tabuleiro[TAMANHO][TAMANHO] = {0};
+// Representações
+#define AGUA 0
+#define NAVIO 3
+#define HABILIDADE 5
 
-    // Vetores representando os navios (valores são todos 3)
-    int navio_horizontal[TAMANHO_NAVIO] = {NAVIO, NAVIO, NAVIO};
-    int navio_vertical[TAMANHO_NAVIO] = {NAVIO, NAVIO, NAVIO};
-
-    // Coordenadas iniciais dos navios (pode alterar se quiser testar outras posições)
-    int linha_horizontal = 2; // Linha para o navio horizontal
-    int coluna_horizontal = 4; // Coluna inicial do navio horizontal
-
-    int linha_vertical = 5; // Linha inicial do navio vertical
-    int coluna_vertical = 7; // Coluna para o navio vertical
-
-    // Validação para garantir que os navios cabem no tabuleiro
-    if (coluna_horizontal + TAMANHO_NAVIO <= TAMANHO && linha_vertical + TAMANHO_NAVIO <= TAMANHO) {
-        
-        // Posiciona o navio horizontal
-        for (int i = 0; i < TAMANHO_NAVIO; i++) {
-            // Verifica se já tem um navio naquela posição (para evitar sobreposição)
-            if (tabuleiro[linha_horizontal][coluna_horizontal + i] == 0) {
-                tabuleiro[linha_horizontal][coluna_horizontal + i] = navio_horizontal[i];
-            } else {
-                printf("Erro: sobreposição detectada ao posicionar navio horizontal!\n");
-                return 1;
-            }
+// Função para construir o cone (em forma de pirâmide invertida)
+void construirCone(int habilidade[TAMANHO_HABILIDADE][TAMANHO_HABILIDADE]) {
+    for (int i = 0; i < TAMANHO_HABILIDADE; i++) {
+        for (int j = 0; j < TAMANHO_HABILIDADE; j++) {
+            if (j >= TAMANHO_HABILIDADE / 2 - i && j <= TAMANHO_HABILIDADE / 2 + i)
+                habilidade[i][j] = 1;
+            else
+                habilidade[i][j] = 0;
         }
-
-        // Posiciona o navio vertical
-        for (int i = 0; i < TAMANHO_NAVIO; i++) {
-            // Verifica se já tem um navio naquela posição (para evitar sobreposição)
-            if (tabuleiro[linha_vertical + i][coluna_vertical] == 0) {
-                tabuleiro[linha_vertical + i][coluna_vertical] = navio_vertical[i];
-            } else {
-                printf("Erro: sobreposição detectada ao posicionar navio vertical!\n");
-                return 1;
-            }
-        }
-
-    } else {
-        printf("Erro: coordenadas invalidas para posicionar os navios!\n");
-        return 1;
     }
+}
 
-    // Exibe o tabuleiro
-    printf("Tabuleiro de Batalha Naval:\n");
-    for (int i = 0; i < TAMANHO; i++) {
-        for (int j = 0; j < TAMANHO; j++) {
-            printf("%d ", tabuleiro[i][j]);
+// Função para construir a cruz
+void construirCruz(int habilidade[TAMANHO_HABILIDADE][TAMANHO_HABILIDADE]) {
+    for (int i = 0; i < TAMANHO_HABILIDADE; i++) {
+        for (int j = 0; j < TAMANHO_HABILIDADE; j++) {
+            if (i == TAMANHO_HABILIDADE / 2 || j == TAMANHO_HABILIDADE / 2)
+                habilidade[i][j] = 1;
+            else
+                habilidade[i][j] = 0;
+        }
+    }
+}
+
+// Função para construir o octaedro (losango)
+void construirOctaedro(int habilidade[TAMANHO_HABILIDADE][TAMANHO_HABILIDADE]) {
+    for (int i = 0; i < TAMANHO_HABILIDADE; i++) {
+        for (int j = 0; j < TAMANHO_HABILIDADE; j++) {
+            if (abs(i - TAMANHO_HABILIDADE / 2) + abs(j - TAMANHO_HABILIDADE / 2) <= TAMANHO_HABILIDADE / 2)
+                habilidade[i][j] = 1;
+            else
+                habilidade[i][j] = 0;
+        }
+    }
+}
+
+// Função para sobrepor uma habilidade ao tabuleiro
+void aplicarHabilidadeAoTabuleiro(int tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO], int habilidade[TAMANHO_HABILIDADE][TAMANHO_HABILIDADE], int origemLinha, int origemColuna) {
+    for (int i = 0; i < TAMANHO_HABILIDADE; i++) {
+        for (int j = 0; j < TAMANHO_HABILIDADE; j++) {
+            int linhaTab = origemLinha - TAMANHO_HABILIDADE / 2 + i;
+            int colTab = origemColuna - TAMANHO_HABILIDADE / 2 + j;
+
+            if (linhaTab >= 0 && linhaTab < TAMANHO_TABULEIRO &&
+                colTab >= 0 && colTab < TAMANHO_TABULEIRO &&
+                habilidade[i][j] == 1 &&
+                tabuleiro[linhaTab][colTab] == AGUA) {
+                tabuleiro[linhaTab][colTab] = HABILIDADE;
+            }
+        }
+    }
+}
+
+// Exibe o tabuleiro no console
+void exibirTabuleiro(int tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO]) {
+    printf("Tabuleiro:\n\n");
+    for (int i = 0; i < TAMANHO_TABULEIRO; i++) {
+        for (int j = 0; j < TAMANHO_TABULEIRO; j++) {
+            if (tabuleiro[i][j] == AGUA)
+                printf("~ ");
+            else if (tabuleiro[i][j] == NAVIO)
+                printf("N ");
+            else if (tabuleiro[i][j] == HABILIDADE)
+                printf("* ");
         }
         printf("\n");
     }
+}
+
+int main() {
+    int tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO] = {0};
+
+    // Posiciona manualmente 4 navios (como antes)
+    // Navio horizontal
+    tabuleiro[1][2] = NAVIO;
+    tabuleiro[1][3] = NAVIO;
+    tabuleiro[1][4] = NAVIO;
+
+    // Navio vertical
+    tabuleiro[4][7] = NAVIO;
+    tabuleiro[5][7] = NAVIO;
+    tabuleiro[6][7] = NAVIO;
+
+    // Diagonal ↘
+    tabuleiro[0][0] = NAVIO;
+    tabuleiro[1][1] = NAVIO;
+    tabuleiro[2][2] = NAVIO;
+
+    // Diagonal ↙
+    tabuleiro[0][9] = NAVIO;
+    tabuleiro[1][8] = NAVIO;
+    tabuleiro[2][7] = NAVIO;
+
+    // Matrizes das habilidades
+    int cone[TAMANHO_HABILIDADE][TAMANHO_HABILIDADE];
+    int cruz[TAMANHO_HABILIDADE][TAMANHO_HABILIDADE];
+    int octaedro[TAMANHO_HABILIDADE][TAMANHO_HABILIDADE];
+
+    construirCone(cone);
+    construirCruz(cruz);
+    construirOctaedro(octaedro);
+
+    // Aplicar habilidades em pontos do tabuleiro
+    aplicarHabilidadeAoTabuleiro(tabuleiro, cone, 5, 2);       // cone apontando para baixo
+    aplicarHabilidadeAoTabuleiro(tabuleiro, cruz, 6, 6);       // cruz no centro inferior
+    aplicarHabilidadeAoTabuleiro(tabuleiro, octaedro, 8, 3);   // octaedro próximo à base
+
+    // Exibe resultado final
+    exibirTabuleiro(tabuleiro);
 
     return 0;
 }
